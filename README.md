@@ -1,350 +1,359 @@
-# 🚀 Proxmox MCP Server (Node.js Edition)
+# 🚀 Proxmox MCP Server v2.0 - Production Grade
 
-A Node.js-based Model Context Protocol (MCP) server for interacting with Proxmox hypervisors, providing a clean interface for managing nodes, VMs, and containers with configurable permission levels.
+A production-ready, TypeScript-based Model Context Protocol (MCP) server for managing Proxmox Virtual Environment. Built with the latest MCP SDK (v1.21.0) and following the 2025-06-18 specification standards.
 
-## 🙏 Credits
+## ✨ What's New in v2.0
 
-This project is based on the original Python implementation by [canvrno/ProxmoxMCP](https://github.com/canvrno/ProxmoxMCP). This Node.js version maintains the same core functionality while adapting it for JavaScript/Node.js environments and adding configurable permission management.
+### 🔧 **Complete Rewrite with Modern Standards**
 
-## 🔄 Changes from Original
+- ✅ **TypeScript** - Full type safety and better IDE support
+- ✅ **Latest MCP SDK 1.21.0** - Supports 2025-06-18 specification
+- ✅ **Modular Architecture** - Clean separation of concerns (12+ files)
+- ✅ **Production Logging** - Winston-based structured logging
+- ✅ **Input Validation** - Zod schemas for all tool inputs
+- ✅ **Retry Logic** - Exponential backoff with configurable attempts
+- ✅ **Rate Limiting** - Prevents API throttling (100 req/min default)
+- ✅ **Error Handling** - Custom error classes with context
+- ✅ **Health Checks** - Built-in connection verification
+- ✅ **Configuration Validation** - Validates env vars at startup
+- ✅ **Auto .env Discovery** - Searches up to 5 parent directories
 
-**Architecture Changes:**
-- ✅ Complete rewrite from Python to Node.js
-- ✅ Uses `@modelcontextprotocol/sdk` instead of Python MCP SDK
-- ✅ Environment variable configuration instead of JSON config files
-- ✅ Simplified dependency management with npm
+### 📊 **Key Improvements Over v1.0**
 
-**New Features:**
-- 🔒 **Configurable Permission Levels**: `PROXMOX_ALLOW_ELEVATED` setting for security
-- 🛡️ **Basic Mode**: Safe operations (node listing, VM status) with minimal permissions
-- 🔓 **Elevated Mode**: Advanced features (detailed metrics, command execution) requiring full permissions
-- 📝 **Better Error Handling**: Clear permission warnings and graceful degradation
-- 🔧 **Auto Environment Loading**: Automatically loads `.env` files from parent directories
+| Feature | v1.0 | v2.0 |
+|---------|------|------|
+| Language | JavaScript | **TypeScript** |
+| MCP SDK | 0.4.0 | **1.21.0** |
+| Architecture | 1 file (562 lines) | **12+ files (modular)** |
+| Error Handling | Basic try-catch | **Custom error classes** |
+| Logging | console.error | **Winston (structured)** |
+| Validation | None | **Zod schemas** |
+| Retry Logic | None | **Exponential backoff** |
+| Rate Limiting | None | **100 req/min** |
+| Type Safety | None | **Full TypeScript** |
+| Tests | None | **Test infrastructure ready** |
 
-## 🏗️ Built With
+## 🏗️ Architecture
 
-- [Node.js](https://nodejs.org/) - JavaScript runtime
-- [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/sdk) - Model Context Protocol SDK for Node.js
-- [node-fetch](https://github.com/node-fetch/node-fetch) - HTTP client for API requests
+```
+src/
+├── index.ts              # Entry point with graceful shutdown
+├── server.ts             # MCP server implementation
+├── config.ts             # Configuration with validation
+├── logger.ts             # Winston logging system
+├── errors.ts             # Custom error classes
+├── types.ts              # TypeScript type definitions
+├── validation.ts         # Zod validation schemas
+├── formatters.ts         # Output formatting utilities
+├── proxmox-client.ts     # API client with retry/rate limiting
+└── tools/                # Individual tool implementations
+    ├── nodes.ts          # Node management tools
+    ├── vms.ts            # VM/container management
+    ├── storage.ts        # Storage management
+    └── cluster.ts        # Cluster health monitoring
+```
 
-## ✨ Features
+## 🔥 Features
 
-- 🔒 **Configurable Security**: Two permission levels for safe operation
-- 🛠️ Built with the official MCP SDK for Node.js
-- 🔐 Secure token-based authentication with Proxmox
-- 🖥️ Comprehensive node and VM management
-- 💻 VM console command execution (elevated mode)
-- 📊 Real-time resource monitoring
-- 🎨 Rich markdown-formatted output
-- ⚡ Fast Node.js performance
-- 🔧 Easy environment-based configuration
+### Core Capabilities
 
+- 🖥️ **Node Management** - List nodes, view detailed status
+- 💻 **VM Operations** - Manage VMs and LXC containers
+- 💾 **Storage Monitoring** - Track storage pools and usage
+- 🏗️ **Cluster Health** - Real-time cluster status
+- ⚡ **Command Execution** - Run commands on VMs (elevated mode)
 
+### Production Features
 
-https://github.com/user-attachments/assets/1b5f42f7-85d5-4918-aca4-d38413b0e82b
-
-
+- 🔒 **Secure** - Token-based authentication
+- 🛡️ **Robust** - Automatic retry on network failures
+- 📊 **Observable** - Structured logging with Winston
+- ✅ **Validated** - All inputs validated with Zod
+- 🔄 **Resilient** - Rate limiting and exponential backoff
+- 🚀 **Fast** - TypeScript with optimized builds
 
 ## 📦 Installation
 
 ### Prerequisites
-- Node.js 16+ and npm
-- Git
-- Access to a Proxmox server with API token credentials
 
-Before starting, ensure you have:
-- [ ] Node.js and npm installed
-- [ ] Proxmox server hostname or IP
-- [ ] Proxmox API token (see [API Token Setup](#proxmox-api-token-setup))
+- Node.js 18+ and npm
+- TypeScript knowledge (for development)
+- Proxmox VE 7.0+ with API access
+- API token with appropriate permissions
 
 ### Quick Install
 
-1. Clone and set up:
-   ```bash
-   git clone https://github.com/gilby125/mcp-proxmox.git
-   cd mcp-proxmox
-   npm install
-   ```
-
-2. Create `.env` file with your Proxmox configuration:
-   ```bash
-   # Proxmox Configuration
-   PROXMOX_HOST=192.168.1.100
-   PROXMOX_USER=root@pam
-   PROXMOX_TOKEN_NAME=mcp-server
-   PROXMOX_TOKEN_VALUE=your-token-value-here
-   PROXMOX_ALLOW_ELEVATED=false  # Set to 'true' for advanced features
-   ```
-
-   **Note**: `PROXMOX_PORT` defaults to 8006 and can be omitted unless using a custom port.
-
-### Permission Levels
-
-**Basic Mode** (`PROXMOX_ALLOW_ELEVATED=false`):
-- List cluster nodes and their status
-- List VMs and containers
-- Basic cluster health overview
-- Requires minimal API token permissions
-
-**Elevated Mode** (`PROXMOX_ALLOW_ELEVATED=true`):
-- All basic features plus:
-- Detailed node resource metrics
-- VM command execution
-- Advanced cluster statistics
-- Requires API token with `Sys.Audit`, `VM.Monitor`, `VM.Console` permissions
-
-### Verifying Installation
-
-1. Test the MCP server:
-   ```bash
-   echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}' | node index.js
-   ```
-
-2. Test a basic API call:
-   ```bash
-   echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "proxmox_get_nodes", "arguments": {}}}' | node index.js
-   ```
-
-   You should see either:
-   - A successful list of your Proxmox nodes
-   - Or a connection/permission error with helpful guidance
-
-## ⚙️ Configuration
-
-### Proxmox API Token Setup
-1. Log into your Proxmox web interface
-2. Navigate to **Datacenter** → **Permissions** → **API Tokens**
-3. Click **Add** to create a new API token:
-   - **User**: Select existing user (e.g., `root@pam`)
-   - **Token ID**: Enter a name (e.g., `mcp-server`)
-   - **Privilege Separation**: Uncheck for full access or leave checked for limited permissions
-   - Click **Add**
-4. **Important**: Copy both the **Token ID** and **Secret** immediately (secret is only shown once)
-   - Use Token ID as `PROXMOX_TOKEN_NAME`
-   - Use Secret as `PROXMOX_TOKEN_VALUE`
-
-**Permission Requirements:**
-- **Basic Mode**: Minimal permissions (usually default user permissions work)
-- **Elevated Mode**: Add permissions for `Sys.Audit`, `VM.Monitor`, `VM.Console` to the user/token
-
-
-## 🚀 Running the Server
-
-### Direct Execution
 ```bash
-node index.js
+# Clone repository
+git clone https://github.com/gilby125/mcp-proxmox.git
+cd mcp-proxmox
+
+# Install dependencies
+npm install
+
+# Build TypeScript
+npm run build
+
+# Copy environment template
+cp .env.example .env
+
+# Edit .env with your Proxmox credentials
+nano .env
 ```
 
-### MCP Client Integration
+### Configuration
 
-For Claude Code or other MCP clients, add this to your MCP configuration:
+Create `.env` file:
+
+```bash
+# Required
+PROXMOX_HOST=192.168.1.100
+PROXMOX_USER=root@pam
+PROXMOX_TOKEN_NAME=mcp-server
+PROXMOX_TOKEN_VALUE=your-token-value-here
+
+# Optional
+PROXMOX_PORT=8006                    # Default: 8006
+PROXMOX_ALLOW_ELEVATED=false        # Enable advanced features
+PROXMOX_TIMEOUT=30000               # API timeout (ms)
+PROXMOX_RETRY_ATTEMPTS=3            # Number of retries
+PROXMOX_RETRY_DELAY=1000            # Base retry delay (ms)
+LOG_LEVEL=info                      # debug, info, warn, error
+```
+
+## 🚀 Usage
+
+### Build and Run
+
+```bash
+# Production build
+npm run build
+npm start
+
+# Development mode (auto-rebuild)
+npm run dev
+
+# Type checking only
+npm run typecheck
+
+# Clean and rebuild
+npm run rebuild
+```
+
+### Testing MCP Server
+
+```bash
+# List available tools
+echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}' | npm start
+
+# Get cluster nodes
+echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "proxmox_get_nodes", "arguments": {}}}' | npm start
+```
+
+### MCP Client Configuration
+
+For Claude Code or other MCP clients:
 
 ```json
 {
   "mcpServers": {
-    "mcp-proxmox": {
+    "proxmox": {
       "command": "node",
-      "args": ["index.js"],
+      "args": ["dist/index.js"],
       "cwd": "/absolute/path/to/mcp-proxmox"
     }
   }
 }
 ```
 
-**Important**: 
-- Replace `/absolute/path/to/mcp-proxmox` with the actual path to your installation
-- The server automatically loads environment variables from `.env` files
-- Ensure the `.env` file is in the same directory as `index.js` or a parent directory
+## 🛠️ Available Tools
 
-# 🔧 Available Tools
+### `proxmox_get_nodes`
+List all cluster nodes with status and resources.
 
-The server provides the following MCP tools for interacting with Proxmox:
+**Arguments:** None
 
-### proxmox_get_nodes
-Lists all nodes in the Proxmox cluster with their status and resources.
+**Example Output:**
+```
+🖥️  **Proxmox Cluster Nodes**
 
-- Parameters: None
-- Example Response:
-  ```
-  🖥️  **Proxmox Cluster Nodes**
+🟢 **pve1**
+   • Status: online
+   • Uptime: 3d 2h 53m
+   • CPU: 1.8%
+   • Memory: 5.89 GB / 62.21 GB (9.5%)
+   • Load: 0.15, 0.12, 0.10
+```
 
-  🟢 **pve1**
-     • Status: online
-     • Uptime: 3d 2h 53m
-     • CPU: 1.8%
-     • Memory: 5.89 GB / 62.21 GB (9.5%)
-     • Load: N/A
-  ```
+### `proxmox_get_vms`
+List all VMs and containers.
 
-### proxmox_get_node_status
-Get detailed status of a specific node (requires elevated permissions).
+**Arguments:**
+- `node` (optional): Filter by node name
+- `type` (optional): Filter by type (qemu, lxc, all)
 
-- Parameters:
-  - `node` (string, required): Name of the node
-- Example Response (Basic Mode):
-  ```
-  ⚠️  **Node Status Requires Elevated Permissions**
+### `proxmox_get_vm_status`
+Get detailed VM status.
 
-  To view detailed node status, set `PROXMOX_ALLOW_ELEVATED=true` in your .env file 
-  and ensure your API token has Sys.Audit permissions.
+**Arguments:**
+- `node` (required): Node name
+- `vmid` (required): VM ID
+- `type` (optional): VM type (qemu, lxc)
 
-  **Current permissions**: Basic (node listing only)
-  ```
+### `proxmox_execute_vm_command`
+Execute command on VM (requires elevated permissions).
 
-### proxmox_get_vms
-List all virtual machines across the cluster with their status.
+**Arguments:**
+- `node` (required): Node name
+- `vmid` (required): VM ID
+- `command` (required): Shell command
+- `type` (optional): VM type
 
-- Parameters:
-  - `node` (string, optional): Filter by specific node
-  - `type` (string, optional): VM type filter ('qemu', 'lxc', 'all'), default: 'all'
-- Example Response:
-  ```
-  💻 **Virtual Machines**
+### `proxmox_get_storage`
+List storage pools and usage.
 
-  🟢 📦 **docker** (ID: 100)
-     • Node: pve1
-     • Status: running
-     • Type: LXC
-     • Uptime: 5h 40m
-     • CPU: 0.8%
-     • Memory: 7.46 GB / 46.88 GB
+**Arguments:**
+- `node` (optional): Filter by node
 
-  🔴 📦 **ubuntu1** (ID: 115)
-     • Node: pve1
-     • Status: stopped
-     • Type: LXC
-  ```
+### `proxmox_get_cluster_status`
+Get overall cluster health and statistics.
 
-### proxmox_get_vm_status
-Get detailed status information for a specific VM.
+**Arguments:** None
 
-- Parameters:
-  - `node` (string, required): Node name where VM is located
-  - `vmid` (string, required): VM ID number
-  - `type` (string, optional): VM type ('qemu', 'lxc'), default: 'qemu'
-- Example Response:
-  ```
-  🟢 📦 **docker** (ID: 100)
+## 🔒 Permission Levels
 
-  • **Node**: pve1
-  • **Status**: running
-  • **Type**: LXC
-  • **Uptime**: 5h 42m
-  • **CPU Usage**: 0.8%
-  • **Memory**: 7.47 GB / 46.88 GB (15.9%)
-  • **Disk Read**: 19.74 GB
-  • **Disk Write**: 21.71 GB
-  • **Network In**: 1.32 GB
-  • **Network Out**: 216.56 MB
-  ```
+### Basic Mode (`PROXMOX_ALLOW_ELEVATED=false`)
+- ✅ List nodes and status
+- ✅ List VMs and containers
+- ✅ View VM status
+- ✅ List storage pools
+- ✅ Basic cluster health
 
-### proxmox_get_storage
-List all storage pools and their usage across the cluster.
+### Elevated Mode (`PROXMOX_ALLOW_ELEVATED=true`)
+- ✅ All basic features
+- ✅ Detailed node metrics
+- ✅ Execute VM commands
+- ✅ Advanced cluster statistics
 
-- Parameters:
-  - `node` (string, optional): Filter by specific node
-- Example Response:
-  ```
-  💾 **Storage Pools**
+**Required Permissions (Elevated):**
+- `Sys.Audit` - Node status and metrics
+- `VM.Monitor` - VM monitoring
+- `VM.Console` - Command execution
 
-  🟢 **local**
-     • Node: pve1
-     • Type: dir
-     • Content: vztmpl,iso,backup
-     • Usage: 19.58 GB / 93.93 GB (20.8%)
-     • Status: Enabled
+## 🔐 API Token Setup
 
-  🟢 **zfs**
-     • Node: pve1
-     • Type: zfspool
-     • Content: rootdir,images
-     • Usage: 87.33 MB / 899.25 GB (0.0%)
-     • Status: Enabled
-  ```
+1. Log into Proxmox web interface
+2. Navigate to **Datacenter** → **Permissions** → **API Tokens**
+3. Click **Add**:
+   - **User**: Select user (e.g., `root@pam`)
+   - **Token ID**: Enter name (e.g., `mcp-server`)
+   - **Privilege Separation**: Uncheck for full access
+4. Copy the **Token ID** and **Secret** immediately
+5. Set in `.env`:
+   ```bash
+   PROXMOX_TOKEN_NAME=mcp-server
+   PROXMOX_TOKEN_VALUE=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+   ```
 
-### proxmox_get_cluster_status
-Get overall cluster status including nodes and resource usage.
+## 📊 Logging
 
-- Parameters: None
-- Example Response (Basic Mode):
-  ```
-  🏗️  **Proxmox Cluster Status**
+Logs are written to:
+- `logs/combined.log` - All logs (JSON format)
+- `logs/error.log` - Error logs only (JSON format)
+- Console - Pretty-printed with colors (development)
 
-  **Cluster Health**: 🟢 Healthy
-  **Nodes**: 1/1 online
+Configure log level:
+```bash
+LOG_LEVEL=debug   # Verbose logging
+LOG_LEVEL=info    # Normal logging (default)
+LOG_LEVEL=warn    # Warnings only
+LOG_LEVEL=error   # Errors only
+```
 
-  ⚠️  **Limited Information**: Resource usage requires elevated permissions
+## 🐛 Troubleshooting
 
-  **Node Details**:
-  🟢 pve1 - online
-  ```
-
-### proxmox_execute_vm_command
-Execute a shell command on a virtual machine via Proxmox API (requires elevated permissions).
-
-- Parameters:
-  - `node` (string, required): Node name where VM is located
-  - `vmid` (string, required): VM ID number
-  - `command` (string, required): Shell command to execute
-  - `type` (string, optional): VM type ('qemu', 'lxc'), default: 'qemu'
-- Example Response (Basic Mode):
-  ```
-  ⚠️  **VM Command Execution Requires Elevated Permissions**
-
-  To execute commands on VMs, set `PROXMOX_ALLOW_ELEVATED=true` in your .env file 
-  and ensure your API token has appropriate VM permissions.
-
-  **Current permissions**: Basic (VM listing only)
-  **Requested command**: `uptime`
-  ```
-- Requirements (Elevated Mode):
-  - VM must be running
-  - For QEMU: QEMU Guest Agent must be installed and running
-  - For LXC: Direct execution via Proxmox API
-  - Appropriate API token permissions
-
-## 👨‍💻 Development
-
-### Development Commands
+### Build Errors
 
 ```bash
-# Install dependencies
+# Clean and rebuild
+npm run clean
 npm install
-
-# Run server (production)
-npm start
-# or
-node index.js
-
-# Run server with auto-reload (development)
-npm run dev
-
-# Test MCP server functionality
-echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}' | node index.js
-
-# Test specific API call
-echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "proxmox_get_nodes", "arguments": {}}}' | node index.js
+npm run build
 ```
 
-### Development Notes
+### Connection Errors
 
-- The server loads environment variables from `.env` files automatically
-- Use `npm run dev` for development with auto-reload on file changes
-- All API calls require a proper `.env` configuration
-- Check the server logs for connection and permission issues
+1. **Verify Proxmox is reachable:**
+   ```bash
+   curl -k https://YOUR_PROXMOX_HOST:8006/api2/json/version
+   ```
 
-## 📁 Project Structure
+2. **Test API token:**
+   ```bash
+   curl -k -H "Authorization: PVEAPIToken=USER!TOKEN=SECRET" \
+     https://YOUR_PROXMOX_HOST:8006/api2/json/nodes
+   ```
 
+3. **Check logs:**
+   ```bash
+   tail -f logs/combined.log
+   ```
+
+### Permission Errors
+
+- Ensure API token has required permissions
+- For elevated mode, add `Sys.Audit`, `VM.Monitor`, `VM.Console`
+- Check token privilege separation is disabled
+
+## 🚀 Development
+
+### Project Scripts
+
+```bash
+npm run build         # Build TypeScript
+npm run build:watch   # Build with watch mode
+npm run dev          # Development mode
+npm run clean        # Clean dist directory
+npm run typecheck    # Type checking only
 ```
-mcp-proxmox/
-├── index.js                  # Main MCP server implementation
-├── package.json             # Node.js dependencies and scripts
-├── package-lock.json        # Dependency lock file
-├── .env                     # Environment configuration (not in git)
-├── node_modules/            # Dependencies (not in git)
-└── README.md               # This documentation
-```
+
+### Adding New Tools
+
+1. Create tool file in `src/tools/`
+2. Add validation schema in `src/validation.ts`
+3. Register in `src/server.ts`
+4. Update type definitions in `src/types.ts`
+
+## 🙏 Credits
+
+Based on the original Python implementation by [canvrno/ProxmoxMCP](https://github.com/canvrno/ProxmoxMCP).
+
+This v2.0 release represents a complete rewrite with:
+- Modern TypeScript architecture
+- Latest MCP SDK and standards
+- Production-grade features
+- Enterprise-ready reliability
 
 ## 📄 License
 
-MIT License
+MIT License - see LICENSE file for details
+
+## 🤝 Contributing
+
+Contributions welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests (if applicable)
+5. Submit a pull request
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/gilby125/mcp-proxmox/issues)
+- **Documentation**: This README
+- **MCP Specification**: [modelcontextprotocol.io](https://modelcontextprotocol.io)
+
+---
+
+**Built with ❤️ using TypeScript and the Model Context Protocol**
