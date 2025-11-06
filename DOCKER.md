@@ -2,6 +2,15 @@
 
 Complete guide for running Proxmox MCP Server v2.2.0 in Docker and integrating it with Claude Desktop App.
 
+## ⚡ Build Performance
+
+**Optimized for speed!** Our Docker build is highly optimized:
+- **First build**: ~30 seconds (vs 14+ minutes with old approach)
+- **Rebuild with cache**: ~5-10 seconds
+- **Image size**: ~120MB (production)
+
+See [DOCKER-OPTIMIZATION.md](./DOCKER-OPTIMIZATION.md) for detailed performance analysis and optimization techniques.
+
 ## 📋 Table of Contents
 
 1. [Prerequisites](#prerequisites)
