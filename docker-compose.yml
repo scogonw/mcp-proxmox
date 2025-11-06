@@ -41,9 +41,9 @@ services:
           cpus: '0.25'
           memory: 128M
 
-    # Health check
+    # Health check - verify container is running and ready for exec
     healthcheck:
-      test: ["CMD", "node", "-e", "process.exit(0)"]
+      test: ["CMD-SHELL", "test -f /app/dist/index.js || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

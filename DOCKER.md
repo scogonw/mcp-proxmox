@@ -225,11 +225,45 @@ docker rm proxmox-mcp-server
 
 ## Claude Desktop Integration
 
+### How It Works
+
+**Container Architecture:**
+1. The Docker container runs `sleep infinity` to stay alive
+2. Container is always running and ready for connections
+3. Claude Desktop uses `docker exec` to run the MCP server on-demand
+4. Each Claude session gets a fresh MCP server instance
+5. Server communicates via stdio (stdin/stdout)
+
+**Why this design:**
+- ✅ Container stays running (no restart loops)
+- ✅ MCP server runs only when needed
+- ✅ Clean isolation per session
+- ✅ Proper stdio communication
+- ✅ No port conflicts or networking issues
+
 ### Step 1: Ensure Container is Running
 
 ```bash
 ./docker-run.sh status
 # Should show container as "Up"
+
+# Or check with docker directly:
+docker ps | grep proxmox-mcp-server
+# Should show: "Up X minutes" (not "Restarting")
+```
+
+**If container is restarting:**
+```bash
+# Check container logs
+docker logs proxmox-mcp-server
+
+# Restart the container
+./docker-run.sh restart
+
+# Or rebuild if needed
+./docker-run.sh clean
+./docker-run.sh build
+./docker-run.sh start
 ```
 
 ### Step 2: Get Configuration
@@ -364,6 +398,46 @@ docker-compose up -d --build
 ```
 
 ## Troubleshooting
+
+### Container Is Restarting (Most Common Issue)
+
+**Symptom:** Claude Desktop shows error: `Container is restarting, wait until the container is running`
+
+**Cause:** This was the old Dockerfile design where the container tried to run the MCP server directly, causing it to exit and restart continuously.
+
+**Solution:**
+```bash
+# 1. Stop and remove the old container
+docker stop proxmox-mcp-server
+docker rm proxmox-mcp-server
+
+# 2. Rebuild with the new Dockerfile (uses 'sleep infinity')
+./docker-run.sh build
+
+# 3. Start the container
+./docker-run.sh start
+
+# 4. Verify it's running (not restarting)
+docker ps | grep proxmox-mcp-server
+# Should show: "Up X seconds" (not "Restarting")
+
+# 5. Restart Claude Desktop completely
+# macOS: killall Claude && open -a Claude
+# Windows: Close and reopen from Start menu
+# Linux: killall claude && claude
+```
+
+**Verify the fix:**
+```bash
+# Container should be running sleep infinity
+docker exec proxmox-mcp-server ps aux
+# Should show: "sleep infinity" process running
+
+# Test MCP server manually
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | \
+  docker exec -i proxmox-mcp-server node dist/index.js
+# Should return JSON with tools list
+```
 
 ### Container Won't Start
 

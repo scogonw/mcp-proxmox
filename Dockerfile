@@ -1,5 +1,10 @@
-# Proxmox MCP Server - Optimized Dockerfile
+# Proxmox MCP Server - Optimized Dockerfile for Claude Desktop
 # Build time: ~30 seconds (vs 14+ minutes)
+#
+# Architecture:
+# - Container stays running with sleep infinity
+# - Claude Desktop execs into it to run MCP server on-demand
+# - Each session gets a fresh MCP server instance
 #
 # Optimizations:
 # - Removed unnecessary build tools (python3, make, g++)
@@ -7,7 +12,7 @@
 # - Optimized layer ordering
 # - Minimal Alpine base
 
-# Enable BuildKit for better caching (set in docker-run.sh)
+# Enable BuildKit for better caching
 # syntax=docker/dockerfile:1
 
 # Stage 1: Build
@@ -70,5 +75,6 @@ EXPOSE 3000
 # Use tini for proper signal handling
 ENTRYPOINT ["/sbin/tini", "--"]
 
-# Start the MCP server
-CMD ["node", "dist/index.js"]
+# Keep container running - Claude Desktop will exec into it
+# The MCP server runs via 'docker exec -i proxmox-mcp-server node dist/index.js'
+CMD ["sleep", "infinity"]
