@@ -23,7 +23,8 @@ COPY tsconfig.json ./
 # Install ALL dependencies with BuildKit cache mount
 # This cache persists between builds for much faster npm installs
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci
+    npm ci && \
+    npm cache clean --force
 
 # Copy source code
 COPY src ./src
