@@ -1,76 +1,117 @@
-# 🚀 Proxmox MCP Server v2.0 - Production Grade
+# 🚀 Proxmox MCP Server v2.2 - Production Grade
 
-A production-ready, TypeScript-based Model Context Protocol (MCP) server for managing Proxmox Virtual Environment. Built with the latest MCP SDK (v1.21.0) and following the 2025-06-18 specification standards.
+A production-ready, TypeScript-based Model Context Protocol (MCP) server for comprehensive Proxmox Virtual Environment management. Built with the latest MCP SDK (v1.21.0) and following the 2025-06-18 specification standards.
 
-## ✨ What's New in v2.0
+**Now with 34 comprehensive tools covering the complete Proxmox management lifecycle!**
 
-### 🔧 **Complete Rewrite with Modern Standards**
+## ✨ What's New in v2.2
 
-- ✅ **TypeScript** - Full type safety and better IDE support
-- ✅ **Latest MCP SDK 1.21.0** - Supports 2025-06-18 specification
-- ✅ **Modular Architecture** - Clean separation of concerns (12+ files)
-- ✅ **Production Logging** - Winston-based structured logging
-- ✅ **Input Validation** - Zod schemas for all tool inputs
-- ✅ **Retry Logic** - Exponential backoff with configurable attempts
-- ✅ **Rate Limiting** - Prevents API throttling (100 req/min default)
-- ✅ **Error Handling** - Custom error classes with context
-- ✅ **Health Checks** - Built-in connection verification
-- ✅ **Configuration Validation** - Validates env vars at startup
-- ✅ **Auto .env Discovery** - Searches up to 5 parent directories
+### 🎯 **Phase 2 & 3 Enhancements - 14 New Tools**
 
-### 📊 **Key Improvements Over v1.0**
+#### **Phase 2: Backup & Cloning (6 tools)**
+- 💾 **Backup Operations** - Create, list, restore, and delete VM backups
+- 🔄 **Cloning** - Full and linked clones with cross-node support
+- 📑 **Templates** - Convert VMs to templates for rapid deployment
 
-| Feature | v1.0 | v2.0 |
-|---------|------|------|
-| Language | JavaScript | **TypeScript** |
-| MCP SDK | 0.4.0 | **1.21.0** |
-| Architecture | 1 file (562 lines) | **12+ files (modular)** |
-| Error Handling | Basic try-catch | **Custom error classes** |
-| Logging | console.error | **Winston (structured)** |
-| Validation | None | **Zod schemas** |
-| Retry Logic | None | **Exponential backoff** |
-| Rate Limiting | None | **100 req/min** |
-| Type Safety | None | **Full TypeScript** |
-| Tests | None | **Test infrastructure ready** |
+#### **Phase 3: Advanced Management (8 tools)**
+- ⚙️ **Resource Management** - VM configuration and disk resizing
+- 🔄 **Migration** - Live and offline VM migration with compatibility checks
+- 🛡️ **Firewall** - Complete firewall rule management for VMs
+
+### 📊 **Evolution Timeline**
+
+| Version | Tools | Key Features |
+|---------|-------|--------------|
+| v1.0 | 7 | Basic monitoring (JavaScript) |
+| v2.0 | 7 | TypeScript rewrite with MCP 1.21.0 |
+| v2.1 | 20 | VM lifecycle, snapshots, task monitoring |
+| **v2.2** | **34** | **Backup, cloning, resources, migration, firewall** |
 
 ## 🏗️ Architecture
 
 ```
 src/
 ├── index.ts              # Entry point with graceful shutdown
-├── server.ts             # MCP server implementation
+├── server.ts             # MCP server implementation (34 tools)
 ├── config.ts             # Configuration with validation
 ├── logger.ts             # Winston logging system
 ├── errors.ts             # Custom error classes
 ├── types.ts              # TypeScript type definitions
-├── validation.ts         # Zod validation schemas
+├── validation.ts         # Zod validation schemas (34 schemas)
 ├── formatters.ts         # Output formatting utilities
 ├── proxmox-client.ts     # API client with retry/rate limiting
 └── tools/                # Individual tool implementations
-    ├── nodes.ts          # Node management tools
-    ├── vms.ts            # VM/container management
-    ├── storage.ts        # Storage management
-    └── cluster.ts        # Cluster health monitoring
+    ├── nodes.ts          # Node management (2 tools)
+    ├── vms.ts            # VM/container monitoring (3 tools)
+    ├── storage.ts        # Storage management (1 tool)
+    ├── cluster.ts        # Cluster health (1 tool)
+    ├── lifecycle.ts      # VM power states (7 tools)
+    ├── snapshots.ts      # Snapshot management (5 tools)
+    ├── tasks.ts          # Task monitoring (4 tools)
+    ├── backup.ts         # Backup operations (4 tools)
+    ├── cloning.ts        # VM cloning & templates (2 tools)
+    ├── resources.ts      # Resource management (3 tools)
+    ├── migration.ts      # VM migration (2 tools)
+    └── firewall.ts       # Firewall rules (4 tools)
 ```
 
-## 🔥 Features
+## 🔥 Complete Feature Set
 
-### Core Capabilities
+### 📊 Monitoring & Status (7 tools)
+- `proxmox_get_nodes` - List all cluster nodes with status
+- `proxmox_get_node_status` - Detailed node metrics (elevated)
+- `proxmox_get_vms` - List all VMs and containers
+- `proxmox_get_vm_status` - Detailed VM status and metrics
+- `proxmox_execute_vm_command` - Execute commands on VMs (elevated)
+- `proxmox_get_storage` - Storage pools and usage
+- `proxmox_get_cluster_status` - Cluster health overview
 
-- 🖥️ **Node Management** - List nodes, view detailed status
-- 💻 **VM Operations** - Manage VMs and LXC containers
-- 💾 **Storage Monitoring** - Track storage pools and usage
-- 🏗️ **Cluster Health** - Real-time cluster status
-- ⚡ **Command Execution** - Run commands on VMs (elevated mode)
+### ⚡ VM Lifecycle (7 tools)
+- `proxmox_vm_start` - Start VMs and containers
+- `proxmox_vm_stop` - Force stop (hard shutdown)
+- `proxmox_vm_shutdown` - Graceful ACPI shutdown
+- `proxmox_vm_reboot` - Reboot guest OS
+- `proxmox_vm_suspend` - Suspend to disk (QEMU only)
+- `proxmox_vm_resume` - Resume from suspension
+- `proxmox_vm_reset` - Hard reset (like reset button)
 
-### Production Features
+### 📸 Snapshots (5 tools)
+- `proxmox_snapshot_create` - Create VM snapshots with optional RAM state
+- `proxmox_snapshot_list` - List all snapshots for a VM
+- `proxmox_snapshot_rollback` - Rollback to snapshot
+- `proxmox_snapshot_delete` - Delete snapshot
+- `proxmox_snapshot_config` - Get snapshot configuration
 
-- 🔒 **Secure** - Token-based authentication
-- 🛡️ **Robust** - Automatic retry on network failures
-- 📊 **Observable** - Structured logging with Winston
-- ✅ **Validated** - All inputs validated with Zod
-- 🔄 **Resilient** - Rate limiting and exponential backoff
-- 🚀 **Fast** - TypeScript with optimized builds
+### 📋 Task Management (4 tools)
+- `proxmox_task_list` - List tasks with filtering
+- `proxmox_task_status` - Get task status and progress
+- `proxmox_task_log` - Retrieve task logs
+- `proxmox_task_stop` - Stop running tasks
+
+### 💾 Backup Operations (4 tools)
+- `proxmox_backup_create` - Create backups with snapshot/suspend/stop modes
+- `proxmox_backup_list` - List backups on storage
+- `proxmox_backup_restore` - Restore VMs from backups
+- `proxmox_backup_delete` - Delete backup archives
+
+### 🔄 Cloning & Templates (2 tools)
+- `proxmox_vm_clone` - Clone VMs (full/linked, cross-node)
+- `proxmox_vm_template` - Convert VMs to templates
+
+### ⚙️ Resource Management (3 tools)
+- `proxmox_vm_config_get` - Get complete VM configuration
+- `proxmox_vm_config_update` - Update VM parameters (CPU, memory, etc.)
+- `proxmox_disk_resize` - Resize VM disks (grow only)
+
+### 🔄 Migration (2 tools)
+- `proxmox_vm_migrate_check` - Check migration compatibility
+- `proxmox_vm_migrate` - Migrate VMs (online/offline, local disks)
+
+### 🛡️ Firewall (4 tools)
+- `proxmox_firewall_rules_list` - List all firewall rules
+- `proxmox_firewall_rule_create` - Create firewall rules
+- `proxmox_firewall_rule_delete` - Delete firewall rules
+- `proxmox_firewall_options` - Get firewall configuration
 
 ## 📦 Installation
 
@@ -148,6 +189,9 @@ echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}' | npm start
 
 # Get cluster nodes
 echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "proxmox_get_nodes", "arguments": {}}}' | npm start
+
+# Create a snapshot
+echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "proxmox_snapshot_create", "arguments": {"node": "pve1", "vmid": 100, "snapname": "backup-2025"}}}' | npm start
 ```
 
 ### MCP Client Configuration
@@ -166,68 +210,173 @@ For Claude Code or other MCP clients:
 }
 ```
 
-## 🛠️ Available Tools
+## 🛠️ Tool Examples
 
-### `proxmox_get_nodes`
-List all cluster nodes with status and resources.
+### VM Lifecycle Management
 
-**Arguments:** None
+```typescript
+// Start a VM
+proxmox_vm_start({
+  node: "pve1",
+  vmid: 100,
+  type: "qemu"
+})
 
-**Example Output:**
+// Graceful shutdown with timeout
+proxmox_vm_shutdown({
+  node: "pve1",
+  vmid: 100,
+  timeout: 300
+})
 ```
-🖥️  **Proxmox Cluster Nodes**
 
-🟢 **pve1**
-   • Status: online
-   • Uptime: 3d 2h 53m
-   • CPU: 1.8%
-   • Memory: 5.89 GB / 62.21 GB (9.5%)
-   • Load: 0.15, 0.12, 0.10
+### Snapshot Operations
+
+```typescript
+// Create snapshot with RAM state
+proxmox_snapshot_create({
+  node: "pve1",
+  vmid: 100,
+  snapname: "before-upgrade",
+  description: "Snapshot before system upgrade",
+  vmstate: true  // Include RAM for running snapshots
+})
+
+// Rollback to snapshot
+proxmox_snapshot_rollback({
+  node: "pve1",
+  vmid: 100,
+  snapname: "before-upgrade"
+})
 ```
 
-### `proxmox_get_vms`
-List all VMs and containers.
+### Backup & Restore
 
-**Arguments:**
-- `node` (optional): Filter by node name
-- `type` (optional): Filter by type (qemu, lxc, all)
+```typescript
+// Create backup with snapshot mode
+proxmox_backup_create({
+  node: "pve1",
+  vmid: 100,
+  storage: "backup-storage",
+  mode: "snapshot",      // Live backup
+  compress: "zstd"       // Best compression
+})
 
-### `proxmox_get_vm_status`
-Get detailed VM status.
+// List backups
+proxmox_backup_list({
+  node: "pve1",
+  storage: "backup-storage",
+  vmid: 100  // Optional filter
+})
 
-**Arguments:**
-- `node` (required): Node name
-- `vmid` (required): VM ID
-- `type` (optional): VM type (qemu, lxc)
+// Restore backup
+proxmox_backup_restore({
+  node: "pve1",
+  storage: "backup-storage",
+  archive: "vzdump-qemu-100-2025_11_06-14_30_00.vma.zst",
+  vmid: 101,  // Restore to new ID
+  force: false
+})
+```
 
-### `proxmox_execute_vm_command`
-Execute command on VM (requires elevated permissions).
+### Cloning & Templates
 
-**Arguments:**
-- `node` (required): Node name
-- `vmid` (required): VM ID
-- `command` (required): Shell command
-- `type` (optional): VM type
+```typescript
+// Create full clone
+proxmox_vm_clone({
+  node: "pve1",
+  vmid: 100,
+  newid: 200,
+  name: "web-server-02",
+  full: true,           // Full clone (independent)
+  target: "pve2"        // Clone to different node
+})
 
-### `proxmox_get_storage`
-List storage pools and usage.
+// Convert to template
+proxmox_vm_template({
+  node: "pve1",
+  vmid: 100
+})
+```
 
-**Arguments:**
-- `node` (optional): Filter by node
+### Resource Management
 
-### `proxmox_get_cluster_status`
-Get overall cluster health and statistics.
+```typescript
+// Update VM configuration
+proxmox_vm_config_update({
+  node: "pve1",
+  vmid: 100,
+  config: {
+    cores: 4,
+    memory: 8192,
+    balloon: 4096
+  }
+})
 
-**Arguments:** None
+// Resize disk
+proxmox_disk_resize({
+  node: "pve1",
+  vmid: 100,
+  disk: "scsi0",
+  size: "+50G"  // Grow by 50GB
+})
+```
+
+### Migration
+
+```typescript
+// Check migration compatibility
+proxmox_vm_migrate_check({
+  node: "pve1",
+  vmid: 100,
+  target: "pve2"
+})
+
+// Perform live migration
+proxmox_vm_migrate({
+  node: "pve1",
+  vmid: 100,
+  target: "pve2",
+  online: true,           // Live migration
+  withLocalDisks: true    // Migrate local disks
+})
+```
+
+### Firewall Management
+
+```typescript
+// Create firewall rule
+proxmox_firewall_rule_create({
+  node: "pve1",
+  vmid: 100,
+  action: "ACCEPT",
+  ruleType: "in",
+  enable: true,
+  proto: "tcp",
+  dport: "80,443",
+  source: "0.0.0.0/0",
+  comment: "Allow HTTP/HTTPS"
+})
+
+// List firewall rules
+proxmox_firewall_rules_list({
+  node: "pve1",
+  vmid: 100
+})
+```
 
 ## 🔒 Permission Levels
 
 ### Basic Mode (`PROXMOX_ALLOW_ELEVATED=false`)
-- ✅ List nodes and status
-- ✅ List VMs and containers
-- ✅ View VM status
-- ✅ List storage pools
-- ✅ Basic cluster health
+- ✅ List nodes, VMs, storage, cluster status
+- ✅ VM lifecycle operations (start, stop, shutdown, etc.)
+- ✅ Snapshot management
+- ✅ Task monitoring
+- ✅ Backup operations
+- ✅ Cloning and templates
+- ✅ Resource management
+- ✅ Migration
+- ✅ Firewall management
 
 ### Elevated Mode (`PROXMOX_ALLOW_ELEVATED=true`)
 - ✅ All basic features
@@ -235,10 +384,9 @@ Get overall cluster health and statistics.
 - ✅ Execute VM commands
 - ✅ Advanced cluster statistics
 
-**Required Permissions (Elevated):**
-- `Sys.Audit` - Node status and metrics
-- `VM.Monitor` - VM monitoring
-- `VM.Console` - Command execution
+**Required Permissions:**
+- **Basic**: `VM.Audit`, `VM.PowerMgmt`, `VM.Backup`, `VM.Clone`, `VM.Config.Disk`, `VM.Config.Network`, `VM.Snapshot`, `Datastore.Audit`
+- **Elevated**: Add `Sys.Audit`, `VM.Monitor`, `VM.Console`
 
 ## 🔐 API Token Setup
 
@@ -324,15 +472,26 @@ npm run typecheck    # Type checking only
 3. Register in `src/server.ts`
 4. Update type definitions in `src/types.ts`
 
+## 🎯 Production Features
+
+- 🔒 **Secure** - Token-based authentication
+- 🛡️ **Robust** - Automatic retry with exponential backoff
+- 📊 **Observable** - Structured logging with Winston
+- ✅ **Validated** - All 34 tools use Zod validation
+- 🔄 **Resilient** - Rate limiting (100 req/min)
+- 🚀 **Fast** - TypeScript with optimized builds
+- 📝 **Type-Safe** - Full TypeScript coverage
+- 🏗️ **Modular** - Clean separation of concerns (13 tool files)
+
 ## 🙏 Credits
 
 Based on the original Python implementation by [canvrno/ProxmoxMCP](https://github.com/canvrno/ProxmoxMCP).
 
-This v2.0 release represents a complete rewrite with:
-- Modern TypeScript architecture
-- Latest MCP SDK and standards
-- Production-grade features
-- Enterprise-ready reliability
+This v2.2 release represents a complete evolution:
+- v1.0: Basic monitoring (7 tools)
+- v2.0: TypeScript rewrite with production features
+- v2.1: VM lifecycle and snapshot management (20 tools)
+- v2.2: Complete Proxmox management suite (34 tools)
 
 ## 📄 License
 
@@ -344,8 +503,8 @@ Contributions welcome! Please:
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Add tests (if applicable)
+3. Make your changes with tests
+4. Ensure TypeScript compilation succeeds
 5. Submit a pull request
 
 ## 📞 Support
@@ -357,3 +516,5 @@ Contributions welcome! Please:
 ---
 
 **Built with ❤️ using TypeScript and the Model Context Protocol**
+
+**🎉 Now with 34 comprehensive tools for complete Proxmox management!**
