@@ -115,14 +115,66 @@ src/
 
 ## 📦 Installation
 
-### Prerequisites
+### 🐳 Docker Installation (Recommended)
+
+The easiest way to run Proxmox MCP Server is using Docker. This method works on all platforms and integrates seamlessly with Claude Desktop.
+
+#### Quick Start with Docker
+
+```bash
+# Clone repository
+git clone https://github.com/gilby125/mcp-proxmox.git
+cd mcp-proxmox
+
+# Create and configure environment
+cp .env.example .env
+nano .env  # Add your Proxmox credentials
+
+# Build and start
+./docker-run.sh build
+./docker-run.sh start
+
+# Test
+./docker-run.sh test
+```
+
+#### Claude Desktop Integration
+
+Add to Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "proxmox": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "proxmox-mcp-server",
+        "node",
+        "dist/index.js"
+      ]
+    }
+  }
+}
+```
+
+**📖 Complete Docker Guide**: See [DOCKER.md](./DOCKER.md) for detailed instructions, troubleshooting, and advanced configuration.
+
+---
+
+### 💻 Native Installation (Alternative)
+
+If you prefer to run without Docker:
+
+#### Prerequisites
 
 - Node.js 18+ and npm
 - TypeScript knowledge (for development)
 - Proxmox VE 7.0+ with API access
 - API token with appropriate permissions
 
-### Quick Install
+#### Quick Install
 
 ```bash
 # Clone repository
