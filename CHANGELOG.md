@@ -2,6 +2,63 @@
 
 All notable changes to the Proxmox MCP Server will be documented in this file.
 
+## [2.2.0] - 2025-11-06
+
+### 🚀 Major Feature Release: Phase 2 & 3 Enhancements - Complete Management Suite
+
+This release completes the comprehensive Proxmox management suite by adding 14 powerful new tools across backup, cloning, resource management, migration, and firewall categories. The server now provides **34 total tools** covering the complete VM lifecycle!
+
+### Added - Backup Operations (4 new tools)
+- **`proxmox_backup_create`** - Create VM/container backups with snapshot/suspend/stop modes
+- **`proxmox_backup_list`** - List backups on storage with optional VM filtering
+- **`proxmox_backup_restore`** - Restore VMs from backup archives
+- **`proxmox_backup_delete`** - Delete backup files from storage
+
+### Added - Cloning & Templates (2 new tools)
+- **`proxmox_vm_clone`** - Clone VMs with full/linked clone support and cross-node cloning
+- **`proxmox_vm_template`** - Convert VMs to templates for rapid deployment
+
+### Added - Resource Management (3 new tools)
+- **`proxmox_vm_config_get`** - Get complete VM configuration organized by category
+- **`proxmox_vm_config_update`** - Update VM parameters (CPU, memory, boot order, etc.)
+- **`proxmox_disk_resize`** - Resize VM disks (grow only) with detailed instructions
+
+### Added - Migration (2 new tools)
+- **`proxmox_vm_migrate_check`** - Check migration compatibility before migrating
+- **`proxmox_vm_migrate`** - Migrate VMs with online/offline and local disk support
+
+### Added - Firewall (4 new tools)
+- **`proxmox_firewall_rules_list`** - List all firewall rules for a VM
+- **`proxmox_firewall_rule_create`** - Create firewall rules with protocol/port/IP filtering
+- **`proxmox_firewall_rule_delete`** - Delete firewall rules by position
+- **`proxmox_firewall_options`** - Get firewall configuration options
+
+### Technical Improvements
+- Added 14 comprehensive Zod validation schemas for all new tools
+- Created 5 new modular tool files (backup.ts, cloning.ts, resources.ts, migration.ts, firewall.ts)
+- Enhanced ArgumentValidator class with 14 new validation methods
+- Integrated all tools into server.ts with proper error handling
+- Maintained TypeScript strict mode compliance across all new code
+- Added extensive JSDoc comments for all new functions
+- Improved output formatting with categorized configuration display
+
+### Code Statistics
+- **Total TypeScript lines**: ~3,200+ (up from ~1,348)
+- **New files**: 5 (backup.ts, cloning.ts, resources.ts, migration.ts, firewall.ts)
+- **Total tools**: **34** (up from 20)
+- **Validation schemas**: **34** (up from 20)
+- **Tool files**: 13 modular files
+
+### Documentation
+- Updated README.md with comprehensive v2.2 documentation
+- Added tool usage examples for all new features
+- Added evolution timeline showing progression from v1.0 to v2.2
+- Enhanced architecture diagram with all 13 tool files
+- Added detailed permission requirements for new tools
+
+### Breaking Changes
+- None - All changes are additive and backward compatible
+
 ## [2.1.0] - 2025-11-06
 
 ### 🎉 Major Feature Release: Phase 1 Enhancements
