@@ -26,6 +26,20 @@ export const vmTypeFilterSchema = z.enum(['qemu', 'lxc', 'all']).default('all');
 
 export const commandSchema = z.string().min(1).max(10000);
 
+export const snapnameSchema = z
+  .string()
+  .min(1)
+  .max(40)
+  .regex(/^[a-zA-Z0-9_\-]+$/, 'Invalid snapshot name format');
+
+export const upidSchema = z.string().min(1);
+
+export const booleanSchema = z.coerce.boolean().optional();
+
+export const timeoutSchema = z.coerce.number().int().positive().max(3600).optional();
+
+export const limitSchema = z.coerce.number().int().positive().max(1000).optional();
+
 /**
  * Tool input validation schemas
  */
@@ -66,6 +80,111 @@ export const getStorageArgsSchema = z.object({
 
 // proxmox_get_cluster_status
 export const getClusterStatusArgsSchema = z.object({});
+
+// VM Lifecycle operations
+export const vmStartArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  type: vmTypeSchema.optional().default('qemu'),
+});
+
+export const vmStopArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  type: vmTypeSchema.optional().default('qemu'),
+});
+
+export const vmShutdownArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  type: vmTypeSchema.optional().default('qemu'),
+  timeout: timeoutSchema,
+});
+
+export const vmRebootArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  type: vmTypeSchema.optional().default('qemu'),
+});
+
+export const vmSuspendArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+});
+
+export const vmResumeArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+});
+
+export const vmResetArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+});
+
+// Snapshot operations
+export const snapshotCreateArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  snapname: snapnameSchema,
+  description: z.string().max(500).optional(),
+  vmstate: booleanSchema,
+  type: vmTypeSchema.optional().default('qemu'),
+});
+
+export const snapshotListArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  type: vmTypeSchema.optional().default('qemu'),
+});
+
+export const snapshotRollbackArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  snapname: snapnameSchema,
+  type: vmTypeSchema.optional().default('qemu'),
+});
+
+export const snapshotDeleteArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  snapname: snapnameSchema,
+  force: booleanSchema,
+  type: vmTypeSchema.optional().default('qemu'),
+});
+
+export const snapshotConfigArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  snapname: snapnameSchema,
+  type: vmTypeSchema.optional().default('qemu'),
+});
+
+// Task operations
+export const taskListArgsSchema = z.object({
+  node: nodeNameSchema,
+  limit: limitSchema,
+  running: booleanSchema,
+  errors: booleanSchema,
+});
+
+export const taskStatusArgsSchema = z.object({
+  node: nodeNameSchema,
+  upid: upidSchema,
+  includeLogs: booleanSchema,
+});
+
+export const taskLogArgsSchema = z.object({
+  node: nodeNameSchema,
+  upid: upidSchema,
+  start: z.coerce.number().int().nonnegative().optional(),
+  limit: limitSchema,
+});
+
+export const taskStopArgsSchema = z.object({
+  node: nodeNameSchema,
+  upid: upidSchema,
+});
 
 /**
  * Validate tool arguments
@@ -118,5 +237,72 @@ export class ArgumentValidator {
 
   static getClusterStatus(args: unknown) {
     return validateArgs(getClusterStatusArgsSchema, args);
+  }
+
+  // VM Lifecycle validators
+  static vmStart(args: unknown) {
+    return validateArgs(vmStartArgsSchema, args);
+  }
+
+  static vmStop(args: unknown) {
+    return validateArgs(vmStopArgsSchema, args);
+  }
+
+  static vmShutdown(args: unknown) {
+    return validateArgs(vmShutdownArgsSchema, args);
+  }
+
+  static vmReboot(args: unknown) {
+    return validateArgs(vmRebootArgsSchema, args);
+  }
+
+  static vmSuspend(args: unknown) {
+    return validateArgs(vmSuspendArgsSchema, args);
+  }
+
+  static vmResume(args: unknown) {
+    return validateArgs(vmResumeArgsSchema, args);
+  }
+
+  static vmReset(args: unknown) {
+    return validateArgs(vmResetArgsSchema, args);
+  }
+
+  // Snapshot validators
+  static snapshotCreate(args: unknown) {
+    return validateArgs(snapshotCreateArgsSchema, args);
+  }
+
+  static snapshotList(args: unknown) {
+    return validateArgs(snapshotListArgsSchema, args);
+  }
+
+  static snapshotRollback(args: unknown) {
+    return validateArgs(snapshotRollbackArgsSchema, args);
+  }
+
+  static snapshotDelete(args: unknown) {
+    return validateArgs(snapshotDeleteArgsSchema, args);
+  }
+
+  static snapshotConfig(args: unknown) {
+    return validateArgs(snapshotConfigArgsSchema, args);
+  }
+
+  // Task validators
+  static taskList(args: unknown) {
+    return validateArgs(taskListArgsSchema, args);
+  }
+
+  static taskStatus(args: unknown) {
+    return validateArgs(taskStatusArgsSchema, args);
+  }
+
+  static taskLog(args: unknown) {
+    return validateArgs(taskLogArgsSchema, args);
+  }
+
+  static taskStop(args: unknown) {
+    return validateArgs(taskStopArgsSchema, args);
   }
 }
