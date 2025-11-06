@@ -186,6 +186,125 @@ export const taskStopArgsSchema = z.object({
   upid: upidSchema,
 });
 
+// Backup operations
+export const backupCreateArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  storage: z.string().min(1),
+  mode: z.enum(['snapshot', 'suspend', 'stop']).optional(),
+  compress: z.enum(['none', 'lzo', 'gzip', 'zstd']).optional(),
+  type: vmTypeSchema.optional().default('qemu'),
+});
+
+export const backupListArgsSchema = z.object({
+  node: nodeNameSchema,
+  storage: z.string().min(1),
+  vmid: vmidSchema.optional(),
+});
+
+export const backupRestoreArgsSchema = z.object({
+  node: nodeNameSchema,
+  storage: z.string().min(1),
+  archive: z.string().min(1),
+  vmid: vmidSchema.optional(),
+  force: booleanSchema,
+});
+
+export const backupDeleteArgsSchema = z.object({
+  node: nodeNameSchema,
+  storage: z.string().min(1),
+  volume: z.string().min(1),
+});
+
+// Cloning operations
+export const cloneVMArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  newid: vmidSchema,
+  name: z.string().min(1).max(64).optional(),
+  description: z.string().max(8192).optional(),
+  full: booleanSchema,
+  target: nodeNameSchema.optional(),
+  type: vmTypeSchema.optional().default('qemu'),
+});
+
+export const templateArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  type: vmTypeSchema.optional().default('qemu'),
+});
+
+// Resource management
+export const vmConfigGetArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  type: vmTypeSchema.optional().default('qemu'),
+});
+
+export const vmConfigUpdateArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  config: z.record(z.any()),
+  type: vmTypeSchema.optional().default('qemu'),
+});
+
+export const diskResizeArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  disk: z.string().min(1).regex(/^(scsi|virtio|ide|sata)\d+$/),
+  size: z.string().regex(/^\+?\d+[KMGT]?$/),
+  type: vmTypeSchema.optional().default('qemu'),
+});
+
+// Migration operations
+export const migrationCheckArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  target: nodeNameSchema,
+});
+
+export const migrateVMArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  target: nodeNameSchema,
+  online: booleanSchema,
+  withLocalDisks: booleanSchema,
+});
+
+// Firewall operations
+export const firewallListArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  type: vmTypeSchema.optional().default('qemu'),
+});
+
+export const firewallCreateArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  action: z.enum(['ACCEPT', 'DROP', 'REJECT']),
+  ruleType: z.enum(['in', 'out']),
+  enable: booleanSchema,
+  proto: z.string().optional(),
+  dport: z.string().optional(),
+  source: z.string().optional(),
+  dest: z.string().optional(),
+  comment: z.string().max(256).optional(),
+  type: vmTypeSchema.optional().default('qemu'),
+});
+
+export const firewallDeleteArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  pos: z.coerce.number().int().nonnegative(),
+  type: vmTypeSchema.optional().default('qemu'),
+});
+
+export const firewallOptionsArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  type: vmTypeSchema.optional().default('qemu'),
+});
+
 /**
  * Validate tool arguments
  */
@@ -304,5 +423,70 @@ export class ArgumentValidator {
 
   static taskStop(args: unknown) {
     return validateArgs(taskStopArgsSchema, args);
+  }
+
+  // Backup validators
+  static backupCreate(args: unknown) {
+    return validateArgs(backupCreateArgsSchema, args);
+  }
+
+  static backupList(args: unknown) {
+    return validateArgs(backupListArgsSchema, args);
+  }
+
+  static backupRestore(args: unknown) {
+    return validateArgs(backupRestoreArgsSchema, args);
+  }
+
+  static backupDelete(args: unknown) {
+    return validateArgs(backupDeleteArgsSchema, args);
+  }
+
+  // Cloning validators
+  static cloneVM(args: unknown) {
+    return validateArgs(cloneVMArgsSchema, args);
+  }
+
+  static convertToTemplate(args: unknown) {
+    return validateArgs(templateArgsSchema, args);
+  }
+
+  // Resource management validators
+  static vmConfigGet(args: unknown) {
+    return validateArgs(vmConfigGetArgsSchema, args);
+  }
+
+  static vmConfigUpdate(args: unknown) {
+    return validateArgs(vmConfigUpdateArgsSchema, args);
+  }
+
+  static diskResize(args: unknown) {
+    return validateArgs(diskResizeArgsSchema, args);
+  }
+
+  // Migration validators
+  static migrationCheck(args: unknown) {
+    return validateArgs(migrationCheckArgsSchema, args);
+  }
+
+  static migrateVM(args: unknown) {
+    return validateArgs(migrateVMArgsSchema, args);
+  }
+
+  // Firewall validators
+  static firewallList(args: unknown) {
+    return validateArgs(firewallListArgsSchema, args);
+  }
+
+  static firewallCreate(args: unknown) {
+    return validateArgs(firewallCreateArgsSchema, args);
+  }
+
+  static firewallDelete(args: unknown) {
+    return validateArgs(firewallDeleteArgsSchema, args);
+  }
+
+  static firewallOptions(args: unknown) {
+    return validateArgs(firewallOptionsArgsSchema, args);
   }
 }

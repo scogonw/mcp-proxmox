@@ -1,7 +1,7 @@
 {
   "name": "mcp-proxmox-server",
-  "version": "2.1.0",
-  "description": "Production-grade MCP server for Proxmox virtualization management with TypeScript - Now with 20 tools!",
+  "version": "2.2.0",
+  "description": "Production-grade MCP server for Proxmox virtualization management with TypeScript - Now with 34 comprehensive tools!",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
