@@ -1,24 +1,10 @@
-# 🚀 Proxmox MCP Server v2.2 - Production Grade
+# 🚀 Proxmox MCP Server
 
-A production-ready, TypeScript-based Model Context Protocol (MCP) server for comprehensive Proxmox Virtual Environment management. Built with the latest MCP SDK (v1.21.0) and following the 2025-06-18 specification standards.
+A production-ready, TypeScript-based Model Context Protocol (MCP) server for comprehensive Proxmox Virtual Environment management. Built with the latest MCP SDK and specification standards.
 
 **Now with 34 comprehensive tools covering the complete Proxmox management lifecycle!**
 
-## ✨ What's New in v2.2
-
-### 🎯 **Phase 2 & 3 Enhancements - 14 New Tools**
-
-#### **Phase 2: Backup & Cloning (6 tools)**
-- 💾 **Backup Operations** - Create, list, restore, and delete VM backups
-- 🔄 **Cloning** - Full and linked clones with cross-node support
-- 📑 **Templates** - Convert VMs to templates for rapid deployment
-
-#### **Phase 3: Advanced Management (8 tools)**
-- ⚙️ **Resource Management** - VM configuration and disk resizing
-- 🔄 **Migration** - Live and offline VM migration with compatibility checks
-- 🛡️ **Firewall** - Complete firewall rule management for VMs
-
-### 📊 **Evolution Timeline**
+## 📊 **Evolution Timeline**
 
 | Version | Tools | Key Features |
 |---------|-------|--------------|
@@ -535,7 +521,7 @@ npm run typecheck    # Type checking only
 - 📝 **Type-Safe** - Full TypeScript coverage
 - 🏗️ **Modular** - Clean separation of concerns (13 tool files)
 
-## 🙏 Credits
+## 🤝 Credits
 
 Based on the original Python implementation by [canvrno/ProxmoxMCP](https://github.com/canvrno/ProxmoxMCP).
 
@@ -549,24 +535,3 @@ This v2.2 release represents a complete evolution:
 
 MIT License - see LICENSE file for details
 
-## 🤝 Contributing
-
-Contributions welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes with tests
-4. Ensure TypeScript compilation succeeds
-5. Submit a pull request
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/gilby125/mcp-proxmox/issues)
-- **Documentation**: This README
-- **MCP Specification**: [modelcontextprotocol.io](https://modelcontextprotocol.io)
-
----
-
-**Built with ❤️ using TypeScript and the Model Context Protocol**
-
-**🎉 Now with 34 comprehensive tools for complete Proxmox management!**
