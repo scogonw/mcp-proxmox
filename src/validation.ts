@@ -305,6 +305,104 @@ export const firewallOptionsArgsSchema = z.object({
   type: vmTypeSchema.optional().default('qemu'),
 });
 
+// VM Creation schemas
+export const createQemuVMArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  name: z.string().min(1).max(64).optional(),
+  memory: z.coerce.number().int().positive().max(1048576).optional(), // Max 1TB
+  cores: z.coerce.number().int().positive().max(128).optional(),
+  sockets: z.coerce.number().int().positive().max(4).optional(),
+  ostype: z.enum([
+    'l26', 'l24', 'win11', 'win10', 'win8', 'win7', 'wvista', 'wxp', 'w2k',
+    'w2k8', 'w2k3', 'solaris', 'other'
+  ]).optional(),
+  iso: z.string().optional(),
+  storage: z.string().min(1).optional(),
+  diskSize: z.string().regex(/^\d+[KMGT]?$/).optional(),
+  net0: z.string().optional(),
+  start: booleanSchema,
+  description: z.string().max(8192).optional(),
+  cpu: z.string().optional(),
+  bios: z.enum(['seabios', 'ovmf']).optional(),
+  machine: z.string().optional(),
+  agent: booleanSchema,
+});
+
+export const createLxcContainerArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  ostemplate: z.string().min(1),
+  hostname: z.string().min(1).max(64).optional(),
+  memory: z.coerce.number().int().positive().max(1048576).optional(),
+  swap: z.coerce.number().int().nonnegative().optional(),
+  cores: z.coerce.number().int().positive().max(128).optional(),
+  storage: z.string().min(1).optional(),
+  rootfsSize: z.string().regex(/^\d+[KMGT]?$/).optional(),
+  password: z.string().min(1).optional(),
+  sshPublicKeys: z.string().optional(),
+  net0: z.string().optional(),
+  start: booleanSchema,
+  unprivileged: booleanSchema,
+  description: z.string().max(8192).optional(),
+});
+
+export const deleteVMArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+  type: vmTypeSchema.optional().default('qemu'),
+  purge: booleanSchema,
+  destroyUnreferencedDisks: booleanSchema,
+});
+
+// Template operations
+export const listTemplatesArgsSchema = z.object({
+  node: nodeNameSchema.optional(),
+  type: vmTypeFilterSchema.optional(),
+});
+
+// Cloud-init configuration schema
+export const cloudInitConfigSchema = z.object({
+  ciuser: z.string().min(1).max(64).optional(),
+  cipassword: z.string().min(1).optional(),
+  sshkeys: z.string().optional(),
+  ipconfig0: z.string().optional(),
+  nameserver: z.string().optional(),
+  searchdomain: z.string().optional(),
+}).optional();
+
+// VM Guest Agent schemas
+export const vmNetworkInfoArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+});
+
+export const vmGuestInfoArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+});
+
+export const vmPingArgsSchema = z.object({
+  node: nodeNameSchema,
+  vmid: vmidSchema,
+});
+
+export const createFromTemplateArgsSchema = z.object({
+  node: nodeNameSchema,
+  templateId: vmidSchema,
+  newVmId: vmidSchema,
+  name: z.string().min(1).max(64).optional(),
+  description: z.string().max(8192).optional(),
+  targetNode: nodeNameSchema.optional(),
+  fullClone: booleanSchema,
+  storage: z.string().min(1).optional(),
+  memory: z.coerce.number().int().positive().max(1048576).optional(),
+  cores: z.coerce.number().int().positive().max(128).optional(),
+  sockets: z.coerce.number().int().positive().max(4).optional(),
+  startAfterCreate: booleanSchema,
+  cloudInit: cloudInitConfigSchema,
+});
+
 /**
  * Validate tool arguments
  */
@@ -488,5 +586,40 @@ export class ArgumentValidator {
 
   static firewallOptions(args: unknown) {
     return validateArgs(firewallOptionsArgsSchema, args);
+  }
+
+  // VM Creation validators
+  static createQemuVM(args: unknown) {
+    return validateArgs(createQemuVMArgsSchema, args);
+  }
+
+  static createLxcContainer(args: unknown) {
+    return validateArgs(createLxcContainerArgsSchema, args);
+  }
+
+  static deleteVM(args: unknown) {
+    return validateArgs(deleteVMArgsSchema, args);
+  }
+
+  // Template validators
+  static listTemplates(args: unknown) {
+    return validateArgs(listTemplatesArgsSchema, args);
+  }
+
+  static createFromTemplate(args: unknown) {
+    return validateArgs(createFromTemplateArgsSchema, args);
+  }
+
+  // VM Guest Agent validators
+  static vmNetworkInfo(args: unknown) {
+    return validateArgs(vmNetworkInfoArgsSchema, args);
+  }
+
+  static vmGuestInfo(args: unknown) {
+    return validateArgs(vmGuestInfoArgsSchema, args);
+  }
+
+  static vmPing(args: unknown) {
+    return validateArgs(vmPingArgsSchema, args);
   }
 }

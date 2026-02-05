@@ -224,3 +224,256 @@ export async function executeVMCommand(
     };
   }
 }
+
+/**
+ * Get VM network interfaces and IP addresses via QEMU guest agent
+ */
+export async function getVMNetworkInfo(
+  client: ProxmoxClient,
+  config: ProxmoxConfig,
+  node: string,
+  vmid: number
+): Promise<{ content: Array<{ type: string; text: string }> }> {
+  logger.info('Getting VM network info', { node, vmid });
+
+  if (!config.allowElevated) {
+    return {
+      content: [
+        {
+          type: 'text',
+          text:
+            '⚠️  **VM Network Info Requires Elevated Permissions**\n\n' +
+            'Set `PROXMOX_ALLOW_ELEVATED=true` in your .env file.',
+        },
+      ],
+    };
+  }
+
+  try {
+    const networkInfo = await client.get<{ result: Array<{
+      name: string;
+      'hardware-address'?: string;
+      'ip-addresses'?: Array<{
+        'ip-address': string;
+        'ip-address-type': string;
+        prefix: number;
+      }>;
+    }> }>(`/nodes/${node}/qemu/${vmid}/agent/network-get-interfaces`);
+
+    let output = `🌐 **Network Interfaces for VM ${vmid}**\n\n`;
+
+    if (!networkInfo.result || networkInfo.result.length === 0) {
+      output += '*No network interfaces found or guest agent not responding.*\n';
+    } else {
+      for (const iface of networkInfo.result) {
+        output += `### ${iface.name}\n`;
+        if (iface['hardware-address']) {
+          output += indentedBullet(`MAC: ${iface['hardware-address']}`, 0);
+        }
+
+        if (iface['ip-addresses'] && iface['ip-addresses'].length > 0) {
+          for (const ip of iface['ip-addresses']) {
+            const type = ip['ip-address-type'] === 'ipv4' ? '📍 IPv4' : '📍 IPv6';
+            output += indentedBullet(`${type}: ${ip['ip-address']}/${ip.prefix}`, 0);
+          }
+        } else {
+          output += indentedBullet(`No IP addresses`, 0);
+        }
+        output += '\n';
+      }
+    }
+
+    logger.info('VM network info retrieved', { node, vmid });
+
+    return {
+      content: [{ type: 'text', text: output }],
+    };
+  } catch (error) {
+    logger.error('Failed to get VM network info', { node, vmid, error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text:
+            `❌ **Failed to get network info for VM ${vmid}**\n\n` +
+            `Error: ${error instanceof Error ? error.message : 'Unknown error'}\n\n` +
+            '*Note: Requires QEMU guest agent to be installed and running inside the VM.*',
+        },
+      ],
+    };
+  }
+}
+
+/**
+ * Get VM guest info (hostname, OS info) via QEMU guest agent
+ */
+export async function getVMGuestInfo(
+  client: ProxmoxClient,
+  config: ProxmoxConfig,
+  node: string,
+  vmid: number
+): Promise<{ content: Array<{ type: string; text: string }> }> {
+  logger.info('Getting VM guest info', { node, vmid });
+
+  if (!config.allowElevated) {
+    return {
+      content: [
+        {
+          type: 'text',
+          text:
+            '⚠️  **VM Guest Info Requires Elevated Permissions**\n\n' +
+            'Set `PROXMOX_ALLOW_ELEVATED=true` in your .env file.',
+        },
+      ],
+    };
+  }
+
+  try {
+    let output = `🖥️ **Guest Information for VM ${vmid}**\n\n`;
+
+    // Get hostname
+    try {
+      const hostnameInfo = await client.get<{ result: { 'host-name': string } }>(
+        `/nodes/${node}/qemu/${vmid}/agent/get-host-name`
+      );
+      if (hostnameInfo.result) {
+        output += `### Hostname\n`;
+        output += indentedBullet(`${hostnameInfo.result['host-name']}`, 0);
+        output += '\n';
+      }
+    } catch {
+      output += `### Hostname\n`;
+      output += indentedBullet(`*Unable to retrieve*`, 0);
+      output += '\n';
+    }
+
+    // Get OS info
+    try {
+      const osInfo = await client.get<{ result: {
+        name?: string;
+        'pretty-name'?: string;
+        version?: string;
+        'version-id'?: string;
+        'kernel-release'?: string;
+        'kernel-version'?: string;
+        machine?: string;
+        id?: string;
+      } }>(`/nodes/${node}/qemu/${vmid}/agent/get-osinfo`);
+
+      if (osInfo.result) {
+        output += `### Operating System\n`;
+        if (osInfo.result['pretty-name']) {
+          output += indentedBullet(`Name: ${osInfo.result['pretty-name']}`, 0);
+        } else if (osInfo.result.name) {
+          output += indentedBullet(`Name: ${osInfo.result.name}`, 0);
+        }
+        if (osInfo.result.version) {
+          output += indentedBullet(`Version: ${osInfo.result.version}`, 0);
+        }
+        if (osInfo.result['kernel-release']) {
+          output += indentedBullet(`Kernel: ${osInfo.result['kernel-release']}`, 0);
+        }
+        if (osInfo.result.machine) {
+          output += indentedBullet(`Architecture: ${osInfo.result.machine}`, 0);
+        }
+        output += '\n';
+      }
+    } catch {
+      output += `### Operating System\n`;
+      output += indentedBullet(`*Unable to retrieve*`, 0);
+      output += '\n';
+    }
+
+    // Get timezone
+    try {
+      const tzInfo = await client.get<{ result: { zone: string; offset: number } }>(
+        `/nodes/${node}/qemu/${vmid}/agent/get-timezone`
+      );
+      if (tzInfo.result) {
+        output += `### Timezone\n`;
+        output += indentedBullet(`Zone: ${tzInfo.result.zone}`, 0);
+        const offsetHours = tzInfo.result.offset / 3600;
+        output += indentedBullet(`Offset: UTC${offsetHours >= 0 ? '+' : ''}${offsetHours}`, 0);
+        output += '\n';
+      }
+    } catch {
+      // Timezone info optional
+    }
+
+    output += '*Note: Information retrieved via QEMU Guest Agent*';
+
+    logger.info('VM guest info retrieved', { node, vmid });
+
+    return {
+      content: [{ type: 'text', text: output }],
+    };
+  } catch (error) {
+    logger.error('Failed to get VM guest info', { node, vmid, error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text:
+            `❌ **Failed to get guest info for VM ${vmid}**\n\n` +
+            `Error: ${error instanceof Error ? error.message : 'Unknown error'}\n\n` +
+            '*Note: Requires QEMU guest agent to be installed and running inside the VM.*',
+        },
+      ],
+    };
+  }
+}
+
+/**
+ * Ping check if VM is reachable (via guest agent)
+ */
+export async function pingVM(
+  client: ProxmoxClient,
+  config: ProxmoxConfig,
+  node: string,
+  vmid: number
+): Promise<{ content: Array<{ type: string; text: string }> }> {
+  logger.info('Pinging VM', { node, vmid });
+
+  if (!config.allowElevated) {
+    return {
+      content: [
+        {
+          type: 'text',
+          text:
+            '⚠️  **VM Ping Requires Elevated Permissions**\n\n' +
+            'Set `PROXMOX_ALLOW_ELEVATED=true` in your .env file.',
+        },
+      ],
+    };
+  }
+
+  try {
+    // Use guest-ping to check if agent is responsive
+    await client.post(`/nodes/${node}/qemu/${vmid}/agent/ping`);
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `✅ **VM ${vmid} is responsive**\n\nQEMU Guest Agent is running and responding.`,
+        },
+      ],
+    };
+  } catch (error) {
+    logger.error('VM ping failed', { node, vmid, error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text:
+            `❌ **VM ${vmid} is not responding**\n\n` +
+            `The QEMU Guest Agent is not responding. The VM may be:\n` +
+            `• Stopped or suspended\n` +
+            `• Guest agent not installed\n` +
+            `• Guest agent service not running\n\n` +
+            `*Tip: Install qemu-guest-agent package inside the VM*`,
+        },
+      ],
+    };
+  }
+}
