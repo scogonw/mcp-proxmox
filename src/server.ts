@@ -84,7 +84,7 @@ export class ProxmoxMCPServer {
     this.server = new Server(
       {
         name: 'proxmox-mcp-server',
-        version: '2.5.1',
+        version: '2.5.2',
       },
       {
         capabilities: {

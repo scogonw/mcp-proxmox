@@ -42,7 +42,7 @@ FROM node:18-alpine AS production
 
 # Add metadata
 LABEL maintainer="Proxmox MCP Server"
-LABEL version="2.5.1"
+LABEL version="2.5.2"
 LABEL description="Production-grade MCP server for Proxmox VE management"
 
 # Install only tini (tiny but powerful init for containers)

@@ -60,7 +60,7 @@ case "$COMMAND" in
     build)
         print_info "Building Docker image with BuildKit optimizations..."
         print_info "This will be much faster on subsequent builds (cached layers)"
-        DOCKER_BUILDKIT=1 docker build -t proxmox-mcp-server:2.5.1 "$SCRIPT_DIR"
+        DOCKER_BUILDKIT=1 docker build -t proxmox-mcp-server:2.5.2 "$SCRIPT_DIR"
         print_success "Docker image built successfully"
         ;;
 
@@ -121,7 +121,7 @@ case "$COMMAND" in
             print_info "Stopping and removing container..."
             docker-compose -f "$SCRIPT_DIR/docker-compose.yml" down
             print_info "Removing Docker image..."
-            docker rmi proxmox-mcp-server:2.5.1 || true
+            docker rmi proxmox-mcp-server:2.5.2 || true
             print_success "Cleanup complete"
         else
             print_info "Cleanup cancelled"
@@ -133,7 +133,7 @@ case "$COMMAND" in
         print_info "Step 1: Pulling latest code..."
         git pull
         print_info "Step 2: Rebuilding Docker image with optimizations..."
-        DOCKER_BUILDKIT=1 docker build -t proxmox-mcp-server:2.5.1 "$SCRIPT_DIR"
+        DOCKER_BUILDKIT=1 docker build -t proxmox-mcp-server:2.5.2 "$SCRIPT_DIR"
         print_info "Step 3: Restarting container..."
         docker-compose -f "$SCRIPT_DIR/docker-compose.yml" up -d
         print_success "Update complete"
