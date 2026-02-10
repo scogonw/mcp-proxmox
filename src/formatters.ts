@@ -82,11 +82,19 @@ export function formatDisk(
 
 /**
  * Format load average
+ * Handles cases where loadavg elements might be undefined or non-numeric
  */
 export function formatLoadAverage(loadavg: number[] | undefined): string {
   if (!loadavg || loadavg.length === 0) return 'N/A';
 
-  return loadavg.map((load) => load.toFixed(2)).join(', ');
+  return loadavg
+    .map((load) => {
+      if (typeof load === 'number' && !isNaN(load)) {
+        return load.toFixed(2);
+      }
+      return 'N/A';
+    })
+    .join(', ');
 }
 
 /**

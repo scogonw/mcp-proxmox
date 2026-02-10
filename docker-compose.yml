@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: proxmox-mcp-server:2.2.0
+    image: proxmox-mcp-server:2.5.2
     container_name: proxmox-mcp-server
     restart: unless-stopped
 

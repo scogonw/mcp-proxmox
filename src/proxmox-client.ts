@@ -77,6 +77,20 @@ export class ProxmoxClient {
   }
 
   /**
+   * Convert object to URL-encoded form data
+   * Proxmox API requires application/x-www-form-urlencoded for POST/PUT
+   */
+  private toFormUrlEncoded(obj: Record<string, any>): string {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined && value !== null) {
+        params.append(key, String(value));
+      }
+    }
+    return params.toString();
+  }
+
+  /**
    * Execute HTTP request with retry logic
    */
   private async executeRequest<T>(
@@ -87,9 +101,16 @@ export class ProxmoxClient {
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
+    // Proxmox API requires x-www-form-urlencoded for POST/PUT requests
+    // This applies even when there's no body - we send an empty form
+    const isWriteMethod = method === 'POST' || method === 'PUT';
+    const contentType = isWriteMethod
+      ? 'application/x-www-form-urlencoded'
+      : 'application/json';
+
     const headers: Record<string, string> = {
       Authorization: this.authHeader,
-      'Content-Type': 'application/json',
+      'Content-Type': contentType,
     };
 
     const options: any = {
@@ -99,7 +120,11 @@ export class ProxmoxClient {
       timeout: this.config.timeout,
     };
 
-    if (body) {
+    // For POST/PUT, always send a body (empty string if no data)
+    // Proxmox API expects form-urlencoded content
+    if (isWriteMethod) {
+      options.body = body ? this.toFormUrlEncoded(body) : '';
+    } else if (body) {
       options.body = JSON.stringify(body);
     }
 

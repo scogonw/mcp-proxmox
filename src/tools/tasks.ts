@@ -124,7 +124,7 @@ export async function getTaskStatus(
 
   try {
     const status = await client.get<TaskStatus>(
-      `/nodes/${node}/tasks/${encodeURIComponent(upid)}/status`
+      `/nodes/${node}/tasks/${upid}/status`
     );
 
     const statusEmoji = status.status === 'running' ? '🔄' :
@@ -153,7 +153,7 @@ export async function getTaskStatus(
     if (includeLogs && status.status !== 'running') {
       try {
         const logs = await client.get<TaskLog[]>(
-          `/nodes/${node}/tasks/${encodeURIComponent(upid)}/log`
+          `/nodes/${node}/tasks/${upid}/log`
         );
 
         if (logs && logs.length > 0) {
@@ -200,7 +200,7 @@ export async function getTaskLog(
     const query = params.length > 0 ? `?${params.join('&')}` : '';
 
     const logs = await client.get<TaskLog[]>(
-      `/nodes/${node}/tasks/${encodeURIComponent(upid)}/log${query}`
+      `/nodes/${node}/tasks/${upid}/log${query}`
     );
 
     let output = sectionHeader('Task Logs', '📄') + '\n\n';
@@ -242,7 +242,7 @@ export async function stopTask(
 
   try {
     await client.delete<string>(
-      `/nodes/${node}/tasks/${encodeURIComponent(upid)}`
+      `/nodes/${node}/tasks/${upid}`
     );
 
     let output = `⛔ **Task Stop Signal Sent**\n\n`;
@@ -275,7 +275,7 @@ export async function waitForTask(
 
   while (true) {
     const status = await client.get<TaskStatus>(
-      `/nodes/${node}/tasks/${encodeURIComponent(upid)}/status`
+      `/nodes/${node}/tasks/${upid}/status`
     );
 
     if (status.status !== 'running') {

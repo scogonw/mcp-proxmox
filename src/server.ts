@@ -18,7 +18,7 @@ import { ArgumentValidator } from './validation.js';
 
 // Import tool handlers
 import { getNodes, getNodeStatus } from './tools/nodes.js';
-import { getVMs, getVMStatus, executeVMCommand } from './tools/vms.js';
+import { getVMs, getVMStatus, executeVMCommand, getVMNetworkInfo, getVMGuestInfo, pingVM } from './tools/vms.js';
 import { getStorage } from './tools/storage.js';
 import { getClusterStatus } from './tools/cluster.js';
 import {
@@ -49,7 +49,7 @@ import {
   restoreBackup,
   deleteBackup,
 } from './tools/backup.js';
-import { cloneVM, convertToTemplate } from './tools/cloning.js';
+import { cloneVM, convertToTemplate, listTemplates, createFromTemplate } from './tools/cloning.js';
 import { getVMConfig, updateVMConfig, resizeDisk } from './tools/resources.js';
 import { checkMigration, migrateVM } from './tools/migration.js';
 import {
@@ -58,6 +58,11 @@ import {
   deleteFirewallRule,
   getFirewallOptions,
 } from './tools/firewall.js';
+import {
+  createQemuVM,
+  createLxcContainer,
+  deleteVM,
+} from './tools/creation.js';
 
 /**
  * Proxmox MCP Server
@@ -79,7 +84,7 @@ export class ProxmoxMCPServer {
     this.server = new Server(
       {
         name: 'proxmox-mcp-server',
-        version: '2.2.0',
+        version: '2.5.2',
       },
       {
         capabilities: {
@@ -129,10 +134,11 @@ export class ProxmoxMCPServer {
             },
           },
           {
-            name: 'proxmox_get_vms',
+            name: 'proxmox_vm_list',
             description:
-              'List all virtual machines and containers across the cluster. ' +
-              'Can filter by node and VM type (QEMU/LXC). Shows status, resources, and uptime.',
+              'List all virtual machines and containers across the Proxmox cluster. ' +
+              'Shows VM ID, name, status (running/stopped), node, CPU usage, memory usage, and uptime. ' +
+              'Can filter by node and VM type (QEMU VMs or LXC containers).',
             inputSchema: {
               type: 'object',
               properties: {
@@ -151,10 +157,10 @@ export class ProxmoxMCPServer {
             },
           },
           {
-            name: 'proxmox_get_vm_status',
+            name: 'proxmox_vm_status',
             description:
-              'Get detailed status information for a specific virtual machine or container. ' +
-              'Shows resource usage, network traffic, disk I/O, and uptime.',
+              'Get detailed status and metrics for a specific VM or container. ' +
+              'Shows current state (running/stopped), CPU usage, memory usage, disk I/O, network traffic, and uptime.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -204,6 +210,48 @@ export class ProxmoxMCPServer {
                 },
               },
               required: ['node', 'vmid', 'command'],
+            },
+          },
+          {
+            name: 'proxmox_vm_network_info',
+            description:
+              'Get network interfaces and IP addresses from a running VM via QEMU Guest Agent. ' +
+              'Shows all network interfaces with their MAC addresses and assigned IPs. Requires guest agent installed.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                node: { type: 'string', description: 'Node name where VM is located' },
+                vmid: { type: 'number', description: 'VM ID number' },
+              },
+              required: ['node', 'vmid'],
+            },
+          },
+          {
+            name: 'proxmox_vm_guest_info',
+            description:
+              'Get guest OS information from a running VM via QEMU Guest Agent. ' +
+              'Shows hostname, OS name/version, kernel version, and timezone. Requires guest agent installed.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                node: { type: 'string', description: 'Node name where VM is located' },
+                vmid: { type: 'number', description: 'VM ID number' },
+              },
+              required: ['node', 'vmid'],
+            },
+          },
+          {
+            name: 'proxmox_vm_ping',
+            description:
+              'Check if a VM is responsive by pinging the QEMU Guest Agent. ' +
+              'Returns success if the guest agent is running, useful to verify VM is fully booted.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                node: { type: 'string', description: 'Node name where VM is located' },
+                vmid: { type: 'number', description: 'VM ID number' },
+              },
+              required: ['node', 'vmid'],
             },
           },
           {
@@ -668,6 +716,57 @@ export class ProxmoxMCPServer {
               required: ['node', 'vmid'],
             },
           },
+          {
+            name: 'proxmox_template_list',
+            description:
+              'List all available VM and container templates (golden images) across the cluster. ' +
+              'Shows template ID, name, node, and resource configuration. Use these templates with proxmox_vm_create_from_template.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                node: { type: 'string', description: 'Optional: filter by specific node' },
+                type: { type: 'string', enum: ['qemu', 'lxc', 'all'], description: 'Filter by type (default: all)', default: 'all' },
+              },
+              required: [],
+            },
+          },
+          {
+            name: 'proxmox_vm_create_from_template',
+            description:
+              'Create a new VM by cloning from a template (golden image). Supports both linked clones (fast, space-efficient) ' +
+              'and full clones (independent). For cloud-init enabled templates, you can configure user, password, SSH keys, ' +
+              'and network settings that will be applied automatically on first boot.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                node: { type: 'string', description: 'Node where the template is located' },
+                templateId: { type: 'number', description: 'Template VM ID to clone from' },
+                newVmId: { type: 'number', description: 'New VM ID (100-999999999)' },
+                name: { type: 'string', description: 'Name for the new VM' },
+                description: { type: 'string', description: 'Description for the new VM' },
+                targetNode: { type: 'string', description: 'Target node (if different from template node)' },
+                fullClone: { type: 'boolean', description: 'Create full clone instead of linked clone (default: false/linked)' },
+                storage: { type: 'string', description: 'Target storage for full clone (e.g., local-lvm)' },
+                memory: { type: 'number', description: 'Override memory in MB' },
+                cores: { type: 'number', description: 'Override CPU cores' },
+                sockets: { type: 'number', description: 'Override CPU sockets' },
+                startAfterCreate: { type: 'boolean', description: 'Start VM after creation' },
+                cloudInit: {
+                  type: 'object',
+                  description: 'Cloud-init configuration (for cloud-init enabled templates)',
+                  properties: {
+                    ciuser: { type: 'string', description: 'Cloud-init user name' },
+                    cipassword: { type: 'string', description: 'Cloud-init user password' },
+                    sshkeys: { type: 'string', description: 'SSH public keys (newline separated)' },
+                    ipconfig0: { type: 'string', description: 'IP config (e.g., "ip=dhcp" or "ip=192.168.1.100/24,gw=192.168.1.1")' },
+                    nameserver: { type: 'string', description: 'DNS server IP' },
+                    searchdomain: { type: 'string', description: 'DNS search domain' },
+                  },
+                },
+              },
+              required: ['node', 'templateId', 'newVmId'],
+            },
+          },
           // Phase 3: Resource Management
           {
             name: 'proxmox_vm_config_get',
@@ -821,6 +920,83 @@ export class ProxmoxMCPServer {
               required: ['node', 'vmid'],
             },
           },
+          // VM Creation Operations
+          {
+            name: 'proxmox_vm_create',
+            description:
+              'Create a new QEMU virtual machine. Supports configuring CPU, memory, storage, network, and boot options. ' +
+              'For installing an OS, specify an ISO file. Returns a task ID for monitoring creation progress.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                node: { type: 'string', description: 'Node name to create VM on' },
+                vmid: { type: 'number', description: 'VM ID (100-999999999)' },
+                name: { type: 'string', description: 'VM name (optional)' },
+                memory: { type: 'number', description: 'Memory in MB (default: 512)' },
+                cores: { type: 'number', description: 'Number of CPU cores (default: 1)' },
+                sockets: { type: 'number', description: 'Number of CPU sockets (default: 1)' },
+                ostype: {
+                  type: 'string',
+                  enum: ['l26', 'l24', 'win11', 'win10', 'win8', 'win7', 'wvista', 'wxp', 'w2k', 'w2k8', 'w2k3', 'solaris', 'other'],
+                  description: 'OS type (l26=Linux 2.6+, win10=Windows 10, etc.)',
+                },
+                iso: { type: 'string', description: 'ISO image path for installation (e.g., local:iso/ubuntu.iso)' },
+                storage: { type: 'string', description: 'Storage pool for VM disk (e.g., local-lvm)' },
+                diskSize: { type: 'string', description: 'Disk size (e.g., 32G, 100G)' },
+                net0: { type: 'string', description: 'Network config (default: virtio,bridge=vmbr0)' },
+                start: { type: 'boolean', description: 'Start VM after creation' },
+                description: { type: 'string', description: 'VM description' },
+                cpu: { type: 'string', description: 'CPU type (e.g., host, kvm64)' },
+                bios: { type: 'string', enum: ['seabios', 'ovmf'], description: 'BIOS type (seabios or UEFI/ovmf)' },
+                agent: { type: 'boolean', description: 'Enable QEMU Guest Agent' },
+              },
+              required: ['node', 'vmid'],
+            },
+          },
+          {
+            name: 'proxmox_container_create',
+            description:
+              'Create a new LXC container. Requires an OS template. Supports configuring resources, network, and SSH access. ' +
+              'Templates must be downloaded first using the Proxmox web UI or pveam command.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                node: { type: 'string', description: 'Node name to create container on' },
+                vmid: { type: 'number', description: 'Container ID (100-999999999)' },
+                ostemplate: { type: 'string', description: 'OS template (e.g., local:vztmpl/ubuntu-22.04-standard_22.04-1_amd64.tar.zst)' },
+                hostname: { type: 'string', description: 'Container hostname' },
+                memory: { type: 'number', description: 'Memory in MB (default: 512)' },
+                swap: { type: 'number', description: 'Swap in MB (default: 512)' },
+                cores: { type: 'number', description: 'Number of CPU cores (default: 1)' },
+                storage: { type: 'string', description: 'Storage pool for root filesystem (e.g., local-lvm)' },
+                rootfsSize: { type: 'string', description: 'Root filesystem size (e.g., 8G)' },
+                password: { type: 'string', description: 'Root password' },
+                sshPublicKeys: { type: 'string', description: 'SSH public keys for root user' },
+                net0: { type: 'string', description: 'Network config (default: name=eth0,bridge=vmbr0,ip=dhcp)' },
+                start: { type: 'boolean', description: 'Start container after creation' },
+                unprivileged: { type: 'boolean', description: 'Create unprivileged container (default: true, recommended)' },
+                description: { type: 'string', description: 'Container description' },
+              },
+              required: ['node', 'vmid', 'ostemplate'],
+            },
+          },
+          {
+            name: 'proxmox_vm_delete',
+            description:
+              'Delete a VM or container permanently. WARNING: This cannot be undone. ' +
+              'The VM/container must be stopped before deletion. Use purge to also remove from backup jobs and HA configuration.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                node: { type: 'string', description: 'Node name' },
+                vmid: { type: 'number', description: 'VM/Container ID to delete' },
+                type: { type: 'string', enum: ['qemu', 'lxc'], description: 'Type (qemu for VMs, lxc for containers)', default: 'qemu' },
+                purge: { type: 'boolean', description: 'Also remove from backup jobs and HA configuration' },
+                destroyUnreferencedDisks: { type: 'boolean', description: 'Destroy disks not referenced in config' },
+              },
+              required: ['node', 'vmid'],
+            },
+          },
         ],
       };
     });
@@ -854,7 +1030,7 @@ export class ProxmoxMCPServer {
             );
           }
 
-          case 'proxmox_get_vms': {
+          case 'proxmox_vm_list': {
             const validation = ArgumentValidator.getVms(args || {});
             if (!validation.success) {
               throw new Error(`Invalid arguments: ${validation.error}`);
@@ -867,7 +1043,7 @@ export class ProxmoxMCPServer {
             );
           }
 
-          case 'proxmox_get_vm_status': {
+          case 'proxmox_vm_status': {
             const validation = ArgumentValidator.getVmStatus(args || {});
             if (!validation.success) {
               throw new Error(`Invalid arguments: ${validation.error}`);
@@ -893,6 +1069,45 @@ export class ProxmoxMCPServer {
               validation.data.vmid,
               validation.data.command,
               validation.data.type
+            );
+          }
+
+          case 'proxmox_vm_network_info': {
+            const validation = ArgumentValidator.vmNetworkInfo(args || {});
+            if (!validation.success) {
+              throw new Error(`Invalid arguments: ${validation.error}`);
+            }
+            return await getVMNetworkInfo(
+              this.client,
+              this.config,
+              validation.data.node,
+              validation.data.vmid
+            );
+          }
+
+          case 'proxmox_vm_guest_info': {
+            const validation = ArgumentValidator.vmGuestInfo(args || {});
+            if (!validation.success) {
+              throw new Error(`Invalid arguments: ${validation.error}`);
+            }
+            return await getVMGuestInfo(
+              this.client,
+              this.config,
+              validation.data.node,
+              validation.data.vmid
+            );
+          }
+
+          case 'proxmox_vm_ping': {
+            const validation = ArgumentValidator.vmPing(args || {});
+            if (!validation.success) {
+              throw new Error(`Invalid arguments: ${validation.error}`);
+            }
+            return await pingVM(
+              this.client,
+              this.config,
+              validation.data.node,
+              validation.data.vmid
             );
           }
 
@@ -1245,6 +1460,45 @@ export class ProxmoxMCPServer {
             );
           }
 
+          case 'proxmox_template_list': {
+            const validation = ArgumentValidator.listTemplates(args || {});
+            if (!validation.success) {
+              throw new Error(`Invalid arguments: ${validation.error}`);
+            }
+            return await listTemplates(
+              this.client,
+              this.config,
+              validation.data.node,
+              validation.data.type
+            );
+          }
+
+          case 'proxmox_vm_create_from_template': {
+            const validation = ArgumentValidator.createFromTemplate(args || {});
+            if (!validation.success) {
+              throw new Error(`Invalid arguments: ${validation.error}`);
+            }
+            return await createFromTemplate(
+              this.client,
+              this.config,
+              validation.data.node,
+              {
+                templateId: validation.data.templateId,
+                newVmId: validation.data.newVmId,
+                name: validation.data.name,
+                description: validation.data.description,
+                targetNode: validation.data.targetNode,
+                fullClone: validation.data.fullClone,
+                storage: validation.data.storage,
+                memory: validation.data.memory,
+                cores: validation.data.cores,
+                sockets: validation.data.sockets,
+                startAfterCreate: validation.data.startAfterCreate,
+                cloudInit: validation.data.cloudInit,
+              }
+            );
+          }
+
           // Resource management operations
           case 'proxmox_vm_config_get': {
             const validation = ArgumentValidator.vmConfigGet(args || {});
@@ -1385,6 +1639,80 @@ export class ProxmoxMCPServer {
               validation.data.node,
               validation.data.vmid,
               validation.data.type
+            );
+          }
+
+          // VM Creation operations
+          case 'proxmox_vm_create': {
+            const validation = ArgumentValidator.createQemuVM(args || {});
+            if (!validation.success) {
+              throw new Error(`Invalid arguments: ${validation.error}`);
+            }
+            return await createQemuVM(
+              this.client,
+              this.config,
+              validation.data.node,
+              {
+                vmid: validation.data.vmid,
+                name: validation.data.name,
+                memory: validation.data.memory,
+                cores: validation.data.cores,
+                sockets: validation.data.sockets,
+                ostype: validation.data.ostype,
+                iso: validation.data.iso,
+                storage: validation.data.storage,
+                diskSize: validation.data.diskSize,
+                net0: validation.data.net0,
+                start: validation.data.start,
+                description: validation.data.description,
+                cpu: validation.data.cpu,
+                bios: validation.data.bios,
+                agent: validation.data.agent,
+              }
+            );
+          }
+
+          case 'proxmox_container_create': {
+            const validation = ArgumentValidator.createLxcContainer(args || {});
+            if (!validation.success) {
+              throw new Error(`Invalid arguments: ${validation.error}`);
+            }
+            return await createLxcContainer(
+              this.client,
+              this.config,
+              validation.data.node,
+              {
+                vmid: validation.data.vmid,
+                ostemplate: validation.data.ostemplate,
+                hostname: validation.data.hostname,
+                memory: validation.data.memory,
+                swap: validation.data.swap,
+                cores: validation.data.cores,
+                storage: validation.data.storage,
+                rootfsSize: validation.data.rootfsSize,
+                password: validation.data.password,
+                sshPublicKeys: validation.data.sshPublicKeys,
+                net0: validation.data.net0,
+                start: validation.data.start,
+                unprivileged: validation.data.unprivileged,
+                description: validation.data.description,
+              }
+            );
+          }
+
+          case 'proxmox_vm_delete': {
+            const validation = ArgumentValidator.deleteVM(args || {});
+            if (!validation.success) {
+              throw new Error(`Invalid arguments: ${validation.error}`);
+            }
+            return await deleteVM(
+              this.client,
+              this.config,
+              validation.data.node,
+              validation.data.vmid,
+              validation.data.type,
+              validation.data.purge,
+              validation.data.destroyUnreferencedDisks
             );
           }
 

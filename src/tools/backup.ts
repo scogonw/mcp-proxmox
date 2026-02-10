@@ -209,7 +209,7 @@ export async function deleteBackup(
 
   try {
     await client.delete<string>(
-      `/nodes/${node}/storage/${storage}/content/${encodeURIComponent(volume)}`
+      `/nodes/${node}/storage/${storage}/content/${volume}`
     );
 
     let output = `🗑️ **Backup Deleted**\n\n`;
